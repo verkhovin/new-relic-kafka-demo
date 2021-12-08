@@ -1,0 +1,47 @@
+version: '3'
+services:
+  app:
+    container_name: app-newrelic-kafka
+    build:
+      context: .
+    image: new-relic-kafka-demo:lastest
+    ports:
+      - "8080:8080"
+    environment:
+      - NEW_RELIC_LICENSE_KEY=<KEY>
+      - NEW_RELIC_APP_NAME=kafka-demo
+      - NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
+      - NEW_RELIC_CLASS_TRANSFORMER_COM_NEWRELIC_INSTRUMENTATION_KAFKA_CLIENTS_SPANS_0_11_0_0_ENABLED=true
+      - NEW_RELIC_AGENT_ENABLED=true
+      - NEW_RELIC_DISTRIBUTED_TRACING_EXCLUDE_NEWRELIC_HEADER=true
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      - kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper
+    container_name: zookeeper-newrelic-demo
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "127.0.0.1:32181:32181"
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    container_name: kafka-newrelic-demo
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_LISTENERS: LISTENER_DOCKER://kafka:29092,LISTENER_MACOS://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER://kafka:29092,LISTENER_MACOS://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER:PLAINTEXT,LISTENER_MACOS:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_MESSAGE_MAX_BYTES: 31457280
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 31457280
+    ports:
+      - "127.0.0.1:29092:29092"
+      - "127.0.0.1:9092:9092"
